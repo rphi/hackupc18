@@ -1,4 +1,4 @@
-# JobCam
+<img src="https://i.imgur.com/oXNYPt6.png" width=400px/>
 
 JobCam is a fun new way to find jobs in your area. It allows you to target your phone at an object, and then through the infocom API we can find a closely matching job, that will be overlayed. The app will process data in real time allowing the user to move the phone around the room to find interesting jobs that they had not considered. 
 
