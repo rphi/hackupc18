@@ -9,7 +9,6 @@ import android.os.Message
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageView
-import com.beust.klaxon.Klaxon
 import com.hackupc.uoe.jobcam.Components.Boundary
 import com.hackupc.uoe.jobcam.Components.MLresponse
 import com.hackupc.uoe.jobcam.Components.MLresults
@@ -17,6 +16,7 @@ import com.wonderkiln.camerakit.CameraKit
 import com.wonderkiln.camerakit.CameraKit.Constants.METHOD_STILL
 import com.wonderkiln.camerakit.CameraView
 import okhttp3.*
+import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.lang.Math.*
@@ -174,15 +174,18 @@ class CameraActivity : Activity() {
 
     fun parseBoundaries(json: String) : Array<Boundary> {
 
-        val resJSON = Klaxon().parse<MLresponse>(json)!!.results
+        val resJSON = JSONObject(json)
 
-        val boundaryList = arrayListOf<Boundary>()
+        var boundaryList = arrayListOf<Boundary>()
 
-        resJSON!!.forEach {
-            boundaryList.add(Boundary(label = it.classes[0],
-                    centre_x = (it.bbox[0] * imageView!!.width).toFloat(),
-                    centre_y = (it.bbox[1] * imageView!!.height).toFloat(),
-                    radius = (min(it.bbox[2], it.bbox[3]) * imageView!!.width) .toFloat()
+        val results = resJSON!!.getJSONArray("results")
+
+        for (i in 0..(results.length() - 1)) {
+            val item = results.getJSONObject(i);
+            boundaryList.add(Boundary(label = item.getJSONArray("classes").getString(0),
+                    centre_x = (item.getJSONArray("bbox").getDouble(0) * imageView!!.width).toFloat(),
+                    centre_y = (item.getJSONArray("bbox").getDouble(1) * imageView!!.height).toFloat(),
+                    radius = (min(item.getJSONArray("bbox").getDouble(2), item.getJSONArray("bbox").getDouble(3)) * imageView!!.width) .toFloat()
             ))
         }
         return boundaryList.toTypedArray()
