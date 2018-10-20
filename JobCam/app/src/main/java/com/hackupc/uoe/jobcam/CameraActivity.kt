@@ -88,6 +88,7 @@ class CameraActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        cameraView?.start()
         paused = false
         viewerState = ViewerState.WAITING
         updateUIHandler?.postDelayed(viewUpdateRunnable, 500)
@@ -96,17 +97,19 @@ class CameraActivity : Activity() {
 
     override fun onPause() {
         cameraView?.stop()
+        paused = true
         super.onPause()
     }
 
     override fun onStop() {
+        paused = true
         cameraView?.stop()
         super.onStop()
     }
 
     val viewUpdateRunnable = object: Runnable {
         override fun run() {
-            if (viewerState == ViewerState.WAITING) {
+            if (viewerState == ViewerState.WAITING && !paused) {
                 capture()
             }
         }
