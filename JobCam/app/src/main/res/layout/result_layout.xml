@@ -67,7 +67,7 @@
         android:textAlignment="center"
         android:elevation="24dp"
         android:textColor="#626262"
-        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus fringilla purus ac eros congue gravida. Morbi ut diam eu leo venenatis tincidunt. Pellentesque tortor massa, gravida in mollis sed, interdum non lectus. Proin finibus leo a porta faucibus."
+        android:text="Loading/Buscando..."
         app:layout_constraintTop_toBottomOf="@id/result_text_short_description"
         app:layout_constraintLeft_toLeftOf="@id/main_paper"
         app:layout_constraintRight_toRightOf="@id/main_paper" />
@@ -83,7 +83,7 @@
         app:layout_constraintRight_toRightOf="@id/main_paper"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="UI Software Designer - 6 month full time"
+        android:text=""
         android:textSize="20sp"
         android:textColor="#000"
         android:textAlignment="center"
@@ -138,7 +138,7 @@
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:text="Related to Laptop"
+        android:text=""
         android:layout_marginTop="5dp"
         android:textSize="20sp"
         />

@@ -11,8 +11,6 @@ import android.support.v7.app.AlertDialog
 import android.view.View
 import com.hackupc.uoe.jobcam.Components.ScreenTouchDetector
 import kotlinx.android.synthetic.main.home_screen.*
-import android.content.DialogInterface
-import android.os.Build
 
 
 class MainActivity : Activity() {
