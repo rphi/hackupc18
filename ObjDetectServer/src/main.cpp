@@ -196,7 +196,7 @@ void handleConnection(tcp::socket &sock)
         }
         assert(dets_c != nullptr);
         std::stringstream jsonss;
-        jsonss << "[\n";
+        jsonss << R"({"results": [)" "\n";
         bool hasoutercomma = false;
         for (int i = 0; i < nboxes; i++)
         {
@@ -229,7 +229,7 @@ void handleConnection(tcp::socket &sock)
                 hasoutercomma = true;
             }
         }
-        jsonss << "\n]\n";
+        jsonss << "\n]}\n";
         std::string json = jsonss.str();
         std::cerr << json << std::endl;
 
