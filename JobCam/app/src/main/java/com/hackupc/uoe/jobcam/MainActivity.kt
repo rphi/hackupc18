@@ -15,8 +15,6 @@ import android.content.DialogInterface
 import android.os.Build
 
 
-
-
 class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

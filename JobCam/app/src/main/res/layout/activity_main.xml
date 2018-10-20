@@ -12,13 +12,6 @@
         android:layout_height="match_parent">
     </com.wonderkiln.camerakit.CameraView>
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/floatingActionButton3"
-        android:layout_width="57dp"
-        android:layout_height="62dp"
-        android:clickable="true"
-        tools:src="@tools:sample/avatars[1]" />
-
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="match_parent"

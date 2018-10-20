@@ -12,6 +12,7 @@ import android.widget.ImageView
 import com.hackupc.uoe.jobcam.Components.Boundary
 import com.hackupc.uoe.jobcam.Components.MLresponse
 import com.hackupc.uoe.jobcam.Components.MLresults
+import com.hackupc.uoe.jobcam.Components.ViewerState
 import com.wonderkiln.camerakit.CameraKit
 import com.wonderkiln.camerakit.CameraKit.Constants.METHOD_STILL
 import com.wonderkiln.camerakit.CameraKit.Constants.VIDEO_QUALITY_720P
@@ -26,6 +27,8 @@ import kotlin.math.sqrt
 
 
 class CameraActivity : Activity() {
+
+    var viewerState: ViewerState = ViewerState.INITIALISING
 
     private var cameraView: CameraView? = null
     private var imageView: ImageView? = null
@@ -51,7 +54,6 @@ class CameraActivity : Activity() {
         cameraView!!.setVideoQuality(VIDEO_QUALITY_720P)
         cameraView!!.setJpegQuality(100)
 
-        val button = findViewById<View>(R.id.floatingActionButton3)
         imageView = findViewById(R.id.imageView)
         imageView!!.addOnLayoutChangeListener { view, left, top, right, bottom, oldLeft, oldRight, oldTop, oldBottom ->
             val viewWidth = right - left
@@ -73,17 +75,13 @@ class CameraActivity : Activity() {
                 return v?.onTouchEvent(event) ?: true
             }
         })
-
-        button.setOnClickListener {
-            thread { capture() }
-        }
-
-
     }
 
     override fun onStart() {
         super.onStart()
         cameraView?.start()
+        viewerState = ViewerState.WAITING
+        updateUIHandler?.postDelayed(viewUpdateRunnable, 500)
     }
 
 
@@ -95,6 +93,13 @@ class CameraActivity : Activity() {
     override fun onStop() {
         cameraView?.stop()
         super.onStop()
+    }
+
+    val viewUpdateRunnable = object: Runnable {
+        override fun run() {
+            if (viewerState == ViewerState.WAITING)
+            capture()
+        }
     }
 
     private val MSG_UPDATE_CANVAS = 1
@@ -109,6 +114,8 @@ class CameraActivity : Activity() {
                         // Update ui in main thread.
                         val bmp = msg.obj as Bitmap
                         imageView!!.setImageBitmap(bmp)
+                        viewerState = ViewerState.WAITING
+                        updateUIHandler?.postDelayed(viewUpdateRunnable, 200)
                     }
                 }
             }
@@ -120,6 +127,7 @@ class CameraActivity : Activity() {
 
     @Throws(IOException::class)
     fun post(url: String, byteArray: ByteArray) {
+        viewerState = ViewerState.UPLOADING
         var body = MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
                 .addFormDataPart("image", "", RequestBody.create(MediaType.parse("image/*"), byteArray))
@@ -134,13 +142,15 @@ class CameraActivity : Activity() {
     }
 
     fun capture() {
+        if (cameraView == null) {return}
+        viewerState = ViewerState.CAPTURING
         cameraView?.captureImage {
             val stream = ByteArrayOutputStream()
             val bmp = it.bitmap!!
             val yxratio = bmp.height.toFloat() / bmp.width.toFloat()
             Bitmap.createScaledBitmap(it.bitmap!!, 608, (608f*yxratio).toInt(), false).compress(Bitmap.CompressFormat.JPEG, 50, stream)
             val image = stream.toByteArray()
-            post("http://192.168.42.78:12345/", image)
+            post("http://10.42.0.1:12345/", image)
             //receive("test")
         }
     }
@@ -160,6 +170,7 @@ class CameraActivity : Activity() {
     }
 
     fun drawBoundaries(boundaries: Array<Boundary>, canvas: Canvas?){
+        viewerState = ViewerState.DRAWING
         if (canvas == null) {return}
 
         canvas.drawColor(Color.TRANSPARENT, PorterDuff.Mode.CLEAR)
@@ -184,7 +195,7 @@ class CameraActivity : Activity() {
     }
 
     fun parseBoundaries(json: String) : Array<Boundary> {
-
+        viewerState = ViewerState.PARSING
         val resJSON = JSONObject(json)
 
         var boundaryList = arrayListOf<Boundary>()
