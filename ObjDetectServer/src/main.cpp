@@ -4,6 +4,12 @@
 #define GPU
 #define OPENCV
 #include <darknet.h>
+#include "opencv2/opencv.hpp"
+
+extern "C"
+{
+    image mat_to_image(cv::Mat m);
+}
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -26,6 +32,7 @@ boost::string_view appSecret;
 
 std::mutex nnMutex;
 network *ann;
+char **classNames;
 
 template <class Stream, bool isRequest, class Body, class Fields>
 void httpSend(Stream &stream, bool &close, boost::system::error_code &ec, http::message<isRequest, Body, Fields> &&msg)
@@ -165,7 +172,67 @@ void handleConnection(tcp::socket &sock)
         body = body.substr(0, it);
         // body is now the image
 
-        std::string json = "{}\n";
+        int nboxes = 0;
+        detection *dets_c = nullptr;
+        layer l = ann->layers[ann->n - 1];
+        {
+            std::lock_guard<std::mutex> lg(nnMutex);
+            image im;
+            {
+                std::vector<uint8_t> bodyPixels{body.begin(), body.end()};
+                cv::Mat m = cv::imdecode(bodyPixels, 1);
+                if (!m.data)
+                {
+                    httpSend(sock, close, ec, badRequest(http::status::not_acceptable, "Malformed request\n"));
+                    std::cerr << "Malformed image at line " << __LINE__ << std::endl;
+                    break;
+                }
+                im = mat_to_image(m);
+            }
+            image sized = letterbox_image(im, ann->w, ann->h);
+            float *X = sized.data;
+            network_predict(ann, X);
+            dets_c = get_network_boxes(ann, im.w, im.h, 0.4f, 0.4f, 0, 1, &nboxes);
+        }
+        assert(dets_c != nullptr);
+        std::stringstream jsonss;
+        jsonss << "[\n";
+        bool hasoutercomma = false;
+        for (int i = 0; i < nboxes; i++)
+        {
+            bool started = false;
+            for (int C = 0; C < l.classes; C++)
+            {
+                if (dets_c[i].prob[C] > 0.4f)
+                {
+                    if (!started)
+                    {
+                        started = true;
+                        if (hasoutercomma)
+                        {
+                            jsonss << ",";
+                        }
+                        jsonss << R"({"bbox":[)" << dets_c[i].bbox.x << "," << dets_c[i].bbox.y << "," << dets_c[i].bbox.w << "," << dets_c[i].bbox.h << "],\n ";
+                        jsonss << R"("classes": [")";
+                        jsonss << classNames[C] << '"';
+                    }
+                    else
+                    {
+                        jsonss << R"(, ")" << classNames[C] << '"';
+                    }
+                }
+            }
+            if (started)
+            {
+                jsonss << R"(]})"
+                       << "\n";
+                hasoutercomma = true;
+            }
+        }
+        jsonss << "\n]\n";
+        std::string json = jsonss.str();
+        std::cerr << json << std::endl;
+
         http::response<http::string_body> res{std::piecewise_construct, std::make_tuple(json), std::make_tuple(http::status::ok, rq.version())};
         res.set(http::field::content_type, "application/json");
         res.content_length(json.size());
@@ -205,7 +272,7 @@ int main(int argc, char **argv)
             int classes = option_find_int(options, const_cast<char *>("classes"), 20);
             char *name_list = option_find_str(options, const_cast<char *>("names"),
                                               const_cast<char *>("darknet/data/names.list"));
-            char **names = get_labels(name_list);
+            classNames = get_labels(name_list);
 
             network *net = load_network(cfgfile, weights, 0);
             set_batch_network(net, 1);

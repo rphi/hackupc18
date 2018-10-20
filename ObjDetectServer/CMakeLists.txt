@@ -7,6 +7,7 @@ project(ObjDetectServer LANGUAGES C CXX CUDA)
 
 find_package(Boost 1.68.0 REQUIRED system)
 find_package(Threads REQUIRED)
+find_package(OpenCV)
 
 set(ODS_SOURCES
     src/main.cpp
@@ -20,4 +21,5 @@ target_link_libraries(objdetectserver PRIVATE
     Boost::boost
     Boost::system
     Threads::Threads
+    ${OpenCV_LIBS}
     ${PROJECT_SOURCE_DIR}/darknet/libdarknet.so)
