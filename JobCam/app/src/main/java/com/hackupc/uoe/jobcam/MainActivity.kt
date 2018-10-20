@@ -16,7 +16,7 @@ class MainActivity : Activity() {
         var touch_detector : ScreenTouchDetector = home_screen_detector as ScreenTouchDetector
         touch_detector.setOnClickListener(object : View.OnClickListener {
             override fun onClick(v: View?) {
-                var intent = Intent(this@MainActivity, ResultsActivity::class.java)
+                var intent = Intent(this@MainActivity, CameraActivity::class.java)
                 startActivity(intent)
             }
         })
