@@ -27,34 +27,6 @@
         android:layout_marginTop="70dp"
         android:background="#FFFFFF"
         />
-    <View
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:elevation="16dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginLeft="60dp"
-        android:layout_marginRight="60dp"
-        android:layout_marginBottom="75dp"
-        android:layout_marginTop="100dp"
-        android:background="#E5E5E5"
-        />
-    <View
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:elevation="8dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        android:layout_marginLeft="70dp"
-        android:layout_marginRight="70dp"
-        android:layout_marginBottom="50dp"
-        android:layout_marginTop="100dp"
-        android:background="#C9C9C9"
-        />
 
     <TextView
         android:id="@+id/result_text_long_description"
