@@ -8,3 +8,9 @@ JobCam is a fun new way to find jobs in your area. It allows you to target your 
 - Android App Development (AR)
 - Object Detection
 - Backend Server side
+
+### Team
+- [@bnelo12](https://github.com/bnelo12)
+- [@rphi](https://github.com/rphi)
+- [@kubasz](https://github.com/kubasz)
+- [@qaisjp](https://github.com/qaisjp)
