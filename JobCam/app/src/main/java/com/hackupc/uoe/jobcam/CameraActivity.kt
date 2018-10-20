@@ -159,6 +159,7 @@ class CameraActivity : Activity() {
 
     fun capture() {
         if (cameraView == null) {return}
+        if (paused) {return}
         viewerState = ViewerState.CAPTURING
         cameraView?.captureImage {
             val stream = ByteArrayOutputStream()
