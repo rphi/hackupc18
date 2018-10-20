@@ -15,6 +15,9 @@ extern "C"
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio.hpp>
+#include <array>
+#include <set>
+#include <vector>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -40,6 +43,155 @@ void httpSend(Stream &stream, bool &close, boost::system::error_code &ec, http::
     close = msg.need_eof();
     http::serializer<isRequest, Body, Fields> s{msg};
     http::write(stream, s, ec);
+}
+
+std::string findObjects(cv::Mat m)
+{
+    int nboxes = 0;
+    detection *dets_c = nullptr;
+    layer l = ann->layers[ann->n - 1];
+    {
+        std::lock_guard<std::mutex> lg(nnMutex);
+        image im;
+        im = mat_to_image(m);
+        image sized = letterbox_image(im, ann->w, ann->h);
+        float *X = sized.data;
+        network_predict(ann, X);
+        dets_c = get_network_boxes(ann, im.w, im.h, 0.4f, 0.4f, 0, 1, &nboxes);
+    }
+    assert(dets_c != nullptr);
+
+    struct ClassResult
+    {
+        boost::string_view name;
+        float prob;
+    };
+
+    struct CObject
+    {
+        std::array<float, 4> bbox;
+        std::vector<ClassResult> classes;
+        bool mark;
+    };
+
+    std::vector<CObject> cobjs;
+
+    for (int i = 0; i < nboxes; i++)
+    {
+        CObject tmp{};
+        tmp.mark = false;
+        tmp.bbox[0] = dets_c[i].bbox.x;
+        tmp.bbox[1] = dets_c[i].bbox.y;
+        tmp.bbox[2] = dets_c[i].bbox.w;
+        tmp.bbox[3] = dets_c[i].bbox.h;
+        for (int C = 0; C < l.classes; C++)
+        {
+            if (dets_c[i].prob[C] > 0.4f)
+            {
+                tmp.classes.push_back({classNames[C], dets_c[i].prob[C]});
+            }
+        }
+        std::sort(tmp.classes.begin(), tmp.classes.end(), [](const ClassResult &A, const ClassResult &B) {
+            return A.prob > B.prob;
+        });
+        if (tmp.classes.size() > 0)
+        {
+            cobjs.emplace_back(std::move(tmp));
+        }
+    }
+
+    std::vector<std::set<size_t>> clusters;
+
+    // Create clusters
+    for (int i = 0; i < cobjs.size(); i++)
+    {
+        if (cobjs[i].mark)
+        {
+            continue;
+        }
+        cobjs[i].mark = true;
+        clusters.emplace_back();
+        clusters.back().insert(i);
+        for (int j = i + 1; j < cobjs.size(); j++)
+        {
+            if (cobjs[j].mark)
+            {
+                continue;
+            }
+            if (cobjs[i].classes.front().name != cobjs[j].classes.front().name)
+            {
+                continue;
+            }
+            float dx = cobjs[i].bbox[0] - cobjs[j].bbox[0];
+            float dy = cobjs[i].bbox[1] - cobjs[j].bbox[1];
+            float rx = (cobjs[i].bbox[2] + cobjs[j].bbox[2]) / 2.0f;
+            float ry = (cobjs[i].bbox[3] + cobjs[j].bbox[3]) / 2.0f;
+            float distance = dx * dx + dy * dy;
+            if (distance < 0.25f * rx * ry)
+            {
+                cobjs[j].mark = true;
+                clusters.back().insert(j);
+            }
+        }
+    }
+
+    std::vector<CObject> newcobjs;
+    for (auto &cluster : clusters)
+    {
+        CObject o;
+        o.bbox.fill(0.0f);
+        for (auto &mergedObjIdx : cluster)
+        {
+            auto &mergedObj = cobjs[mergedObjIdx];
+            o.bbox[0] += mergedObj.bbox[0];
+            o.bbox[1] += mergedObj.bbox[1];
+            o.bbox[2] += mergedObj.bbox[2];
+            o.bbox[3] += mergedObj.bbox[3];
+        }
+        o.bbox[0] /= cluster.size();
+        o.bbox[1] /= cluster.size();
+        o.bbox[2] /= cluster.size();
+        o.bbox[3] /= cluster.size();
+        o.classes = cobjs[*cluster.begin()].classes;
+        newcobjs.emplace_back(std::move(o));
+    }
+
+    std::cerr << "Clustered " << cobjs.size() << " objects into " << newcobjs.size() << " groups." << std::endl;
+
+    std::stringstream jsonss;
+    jsonss << R"({"results": [)"
+              "\n";
+    bool hasoutercomma = false;
+    for (auto &box : newcobjs)
+    {
+        bool started = false;
+        for (auto &cls : box.classes)
+        {
+            if (!started)
+            {
+                started = true;
+                if (hasoutercomma)
+                {
+                    jsonss << ",";
+                }
+                jsonss << R"({"bbox":[)" << box.bbox[0] << "," << box.bbox[1] << "," << box.bbox[2] << "," << box.bbox[3] << "],\n ";
+                jsonss << R"("classes": [")";
+                jsonss << cls.name << '"';
+            }
+            else
+            {
+                jsonss << R"(, ")" << cls.name << '"';
+            }
+        }
+        if (started)
+        {
+            jsonss << R"(]})"
+                   << "\n";
+            hasoutercomma = true;
+        }
+    }
+    jsonss << "\n]}\n";
+    return jsonss.str();
 }
 
 void handleConnection(tcp::socket &sock)
@@ -172,66 +324,18 @@ void handleConnection(tcp::socket &sock)
         body = body.substr(0, it);
         // body is now the image
 
-        int nboxes = 0;
-        detection *dets_c = nullptr;
-        layer l = ann->layers[ann->n - 1];
+        cv::Mat m;
         {
-            std::lock_guard<std::mutex> lg(nnMutex);
-            image im;
-            {
-                std::vector<uint8_t> bodyPixels{body.begin(), body.end()};
-                cv::Mat m = cv::imdecode(bodyPixels, 1);
-                if (!m.data)
-                {
-                    httpSend(sock, close, ec, badRequest(http::status::not_acceptable, "Malformed request\n"));
-                    std::cerr << "Malformed image at line " << __LINE__ << std::endl;
-                    break;
-                }
-                im = mat_to_image(m);
-            }
-            image sized = letterbox_image(im, ann->w, ann->h);
-            float *X = sized.data;
-            network_predict(ann, X);
-            dets_c = get_network_boxes(ann, im.w, im.h, 0.4f, 0.4f, 0, 1, &nboxes);
+            std::vector<uint8_t> bodyPixels{body.begin(), body.end()};
+            m = cv::imdecode(bodyPixels, 1);
         }
-        assert(dets_c != nullptr);
-        std::stringstream jsonss;
-        jsonss << R"({"results": [)" "\n";
-        bool hasoutercomma = false;
-        for (int i = 0; i < nboxes; i++)
+        if (!m.data)
         {
-            bool started = false;
-            for (int C = 0; C < l.classes; C++)
-            {
-                if (dets_c[i].prob[C] > 0.4f)
-                {
-                    if (!started)
-                    {
-                        started = true;
-                        if (hasoutercomma)
-                        {
-                            jsonss << ",";
-                        }
-                        jsonss << R"({"bbox":[)" << dets_c[i].bbox.x << "," << dets_c[i].bbox.y << "," << dets_c[i].bbox.w << "," << dets_c[i].bbox.h << "],\n ";
-                        jsonss << R"("classes": [")";
-                        jsonss << classNames[C] << '"';
-                    }
-                    else
-                    {
-                        jsonss << R"(, ")" << classNames[C] << '"';
-                    }
-                }
-            }
-            if (started)
-            {
-                jsonss << R"(]})"
-                       << "\n";
-                hasoutercomma = true;
-            }
+            httpSend(sock, close, ec, badRequest(http::status::not_acceptable, "Malformed request\n"));
+            std::cerr << "Malformed image at line " << __LINE__ << std::endl;
+            break;
         }
-        jsonss << "\n]}\n";
-        std::string json = jsonss.str();
-        std::cerr << json << std::endl;
+        std::string json = findObjects(m);
 
         http::response<http::string_body> res{std::piecewise_construct, std::make_tuple(json), std::make_tuple(http::status::ok, rq.version())};
         res.set(http::field::content_type, "application/json");
