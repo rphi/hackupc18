@@ -2,6 +2,7 @@ package com.hackupc.uoe.jobcam
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.Intent
 import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
@@ -29,6 +30,7 @@ import kotlin.math.sqrt
 class CameraActivity : Activity() {
 
     var viewerState: ViewerState = ViewerState.INITIALISING
+    var paused: Boolean = false
 
     private var cameraView: CameraView? = null
     private var imageView: ImageView? = null
@@ -84,6 +86,13 @@ class CameraActivity : Activity() {
         updateUIHandler?.postDelayed(viewUpdateRunnable, 500)
     }
 
+    override fun onResume() {
+        super.onResume()
+        paused = false
+        viewerState = ViewerState.WAITING
+        updateUIHandler?.postDelayed(viewUpdateRunnable, 500)
+    }
+
 
     override fun onPause() {
         cameraView?.stop()
@@ -97,8 +106,9 @@ class CameraActivity : Activity() {
 
     val viewUpdateRunnable = object: Runnable {
         override fun run() {
-            if (viewerState == ViewerState.WAITING)
-            capture()
+            if (viewerState == ViewerState.WAITING) {
+                capture()
+            }
         }
     }
 
@@ -111,6 +121,9 @@ class CameraActivity : Activity() {
                 override fun handleMessage(msg: Message) {
                     // Means the message is sent from child thread.
                     if (msg.what === MSG_UPDATE_CANVAS) {
+                        if (paused) {
+                            return
+                        }
                         // Update ui in main thread.
                         val bmp = msg.obj as Bitmap
                         imageView!!.setImageBitmap(bmp)
@@ -244,6 +257,11 @@ class CameraActivity : Activity() {
     }
 
     fun tappedOn(tapped: String){
-        print(tapped)
+        paused = true
+        val intent = Intent(this, ResultsActivity::class.java)
+        // To pass any data to next activity
+        intent.putExtra("keyword", tapped)
+        // start your next activity
+        startActivity(intent)
     }
 }
