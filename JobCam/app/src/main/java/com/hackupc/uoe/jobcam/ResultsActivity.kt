@@ -3,6 +3,7 @@ package com.hackupc.uoe.jobcam
 import android.app.Activity
 import android.os.Bundle
 import android.util.Log
+import kotlinx.android.synthetic.main.result_layout.*
 
 import okhttp3.*
 import java.io.IOException
@@ -12,6 +13,8 @@ class ResultsActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.result_layout)
+        back_button.setOnClickListener {this@ResultsActivity.finish();}
+        deny_job_button.setOnClickListener {this@ResultsActivity.finish();}
         thread() {
             // Do Search Here
         }
