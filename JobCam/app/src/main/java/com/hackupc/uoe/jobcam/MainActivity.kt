@@ -1,35 +1,27 @@
 package com.hackupc.uoe.jobcam
 
 import android.app.Activity
-
+import android.content.Intent
 import android.os.Bundle
-import com.wonderkiln.camerakit.*
+import android.view.View
+import com.hackupc.uoe.jobcam.Components.ScreenTouchDetector
+import kotlinx.android.synthetic.main.home_screen.*
 
 
 class MainActivity : Activity() {
 
-    private var cameraView: CameraView? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        cameraView = findViewById(R.id.camera)
+        setContentView(R.layout.home_screen)
+        var touch_detector : ScreenTouchDetector = home_screen_detector as ScreenTouchDetector
+        touch_detector.setOnClickListener(object : View.OnClickListener {
+            override fun onClick(v: View?) {
+                var intent = Intent(this@MainActivity, CameraActivity::class.java)
+                startActivity(intent)
+            }
+        })
     }
 
-    override fun onStart() {
-        super.onStart()
-        cameraView?.start()
-    }
 
-
-    override fun onPause() {
-        cameraView?.stop()
-        super.onPause()
-    }
-
-    override fun onStop() {
-        cameraView?.stop()
-        super.onStop()
-    }
 
 }
