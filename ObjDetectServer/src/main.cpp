@@ -58,6 +58,7 @@ std::string findObjects(cv::Mat m)
         float *X = sized.data;
         network_predict(ann, X);
         dets_c = get_network_boxes(ann, im.w, im.h, 0.4f, 0.4f, 0, 1, &nboxes);
+        free_image(im);
     }
     assert(dets_c != nullptr);
 
