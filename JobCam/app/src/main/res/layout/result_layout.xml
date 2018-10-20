@@ -1,6 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.constraint.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#1A80E9"
+        />
+
+    <View
+        android:id="@+id/main_paper"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:elevation="24dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="50dp"
+        android:layout_marginRight="50dp"
+        android:layout_marginBottom="100dp"
+        android:layout_marginTop="70dp"
+        android:background="#FFFFFF"
+        />
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:elevation="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="60dp"
+        android:layout_marginRight="60dp"
+        android:layout_marginBottom="75dp"
+        android:layout_marginTop="100dp"
+        android:background="#E5E5E5"
+        />
+    <View
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:elevation="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        android:layout_marginLeft="70dp"
+        android:layout_marginRight="70dp"
+        android:layout_marginBottom="50dp"
+        android:layout_marginTop="100dp"
+        android:background="#C9C9C9"
+        />
+
+    <TextView
+        android:id="@+id/result_text_long_description"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:contentDescription="infojob"
+        android:textAlignment="center"
+        android:elevation="24dp"
+        android:textColor="#626262"
+        android:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Phasellus fringilla purus ac eros congue gravida. Morbi ut diam eu leo venenatis tincidunt. Pellentesque tortor massa, gravida in mollis sed, interdum non lectus. Proin finibus leo a porta faucibus."
+        app:layout_constraintTop_toBottomOf="@id/result_text_short_description"
+        app:layout_constraintLeft_toLeftOf="@id/main_paper"
+        app:layout_constraintRight_toRightOf="@id/main_paper" />
+
+    <TextView
+        android:id="@+id/result_text_short_description"
+        android:elevation="24dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="20dp"
+        app:layout_constraintTop_toTopOf="@id/main_paper"
+        app:layout_constraintLeft_toLeftOf="@id/main_paper"
+        app:layout_constraintRight_toRightOf="@id/main_paper"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="UI Software Designer - 6 month full time"
+        android:textSize="20sp"
+        android:textColor="#000"
+        android:textAlignment="center"
+        tools:layout_editor_absoluteX="36dp"
+        tools:layout_editor_absoluteY="130dp"
+        tools:text="UI Software Designer - 6 Months" />
+
+    <Button
+        android:id="@+id/accept_job_button"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="@id/main_paper"
+        app:layout_constraintRight_toRightOf="@id/main_paper"
+        app:layout_constraintBottom_toBottomOf="@id/deny_job_button"
+        android:layout_marginBottom="30dp"
+        android:background="#1A80E9"
+        android:text="APPLY"
+        android:stateListAnimator="@null"
+        android:layout_marginRight="30dp"
+        android:layout_marginLeft="30dp"
+        app:elevation="24dp"
+        android:translationZ="24dp"/>
+
+    <TextView
+        android:id="@+id/deny_job_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="@id/main_paper"
+        app:layout_constraintRight_toRightOf="@id/main_paper"
+        app:layout_constraintBottom_toBottomOf="@id/main_paper"
+        android:elevation="24dp"
+        android:textColor="#626262"
+        android:layout_marginBottom="15dp"
+        android:text="No Thank You"
+        />
+
+    <Button
+        android:id="@+id/back_button"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginLeft="5dp"
+        android:layout_marginTop="5dp"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="?attr/actionModeCloseDrawable"/>
+
+    <TextView
+        android:id="@+id/search_term_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:text="Related to Laptop"
+        android:layout_marginTop="5dp"
+        android:textSize="20sp"
+        />
 </android.support.constraint.ConstraintLayout>
