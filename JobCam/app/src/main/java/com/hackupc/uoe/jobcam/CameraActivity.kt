@@ -135,7 +135,7 @@ class CameraActivity : Activity() {
             val stream = ByteArrayOutputStream()
             it.bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream)
             val image = stream.toByteArray()
-            post("http://10.42.0.1:12345/", image)
+            post("http://192.168.42.78:12345/", image)
             //receive("test")
         }
     }
@@ -162,12 +162,18 @@ class CameraActivity : Activity() {
 
         val paint = Paint()
         paint.style = Paint.Style.STROKE
-        paint.color = Color.RED
+        paint.color = Color.rgb(200,100,100)
         paint.strokeWidth = 5.0f
         paint.textSize = 30f
+        var fontPaint = Paint()
+        fontPaint.textAlign = Paint.Align.CENTER
+        fontPaint.style = Paint.Style.FILL_AND_STROKE
+        fontPaint.color = Color.WHITE
+        fontPaint.strokeWidth = 1.0f
+        fontPaint.textSize = 50f
         boundaries.forEach {
             canvas.drawCircle(it.centre_x, it.centre_y, it.radius, paint)
-            canvas.drawText(it.label, it.centre_x, it.centre_y, paint)
+            canvas.drawText(it.label, it.centre_x, it.centre_y, fontPaint)
         }
         this.boundaries = boundaries
     }
