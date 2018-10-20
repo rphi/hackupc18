@@ -14,6 +14,7 @@ import com.hackupc.uoe.jobcam.Components.MLresponse
 import com.hackupc.uoe.jobcam.Components.MLresults
 import com.wonderkiln.camerakit.CameraKit
 import com.wonderkiln.camerakit.CameraKit.Constants.METHOD_STILL
+import com.wonderkiln.camerakit.CameraKit.Constants.VIDEO_QUALITY_720P
 import com.wonderkiln.camerakit.CameraView
 import okhttp3.*
 import org.json.JSONObject
@@ -47,6 +48,8 @@ class CameraActivity : Activity() {
 
         cameraView = findViewById(R.id.camera)
         cameraView!!.setMethod(METHOD_STILL)
+        cameraView!!.setVideoQuality(VIDEO_QUALITY_720P)
+        cameraView!!.setJpegQuality(100)
 
         val button = findViewById<View>(R.id.floatingActionButton3)
         imageView = findViewById(R.id.imageView)
@@ -133,7 +136,9 @@ class CameraActivity : Activity() {
     fun capture() {
         cameraView?.captureImage {
             val stream = ByteArrayOutputStream()
-            it.bitmap.compress(Bitmap.CompressFormat.JPEG, 50, stream)
+            val bmp = it.bitmap!!
+            val yxratio = bmp.height.toFloat() / bmp.width.toFloat()
+            Bitmap.createScaledBitmap(it.bitmap!!, 608, (608f*yxratio).toInt(), false).compress(Bitmap.CompressFormat.JPEG, 50, stream)
             val image = stream.toByteArray()
             post("http://192.168.42.78:12345/", image)
             //receive("test")
