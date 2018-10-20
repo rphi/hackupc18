@@ -12,7 +12,6 @@ class CameraActivity : Activity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         cameraView = findViewById(R.id.camera)
-
     }
 
     override fun onStart() {
