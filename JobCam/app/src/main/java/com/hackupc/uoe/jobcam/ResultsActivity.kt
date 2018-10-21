@@ -1,6 +1,7 @@
 package com.hackupc.uoe.jobcam
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.net.Uri
@@ -17,6 +18,10 @@ import org.json.JSONObject
 import java.io.IOException
 import kotlin.concurrent.thread
 import android.support.customtabs.CustomTabsIntent
+import android.R.string.cancel
+import android.annotation.SuppressLint
+import android.content.DialogInterface
+import android.graphics.Camera
 
 
 class ResultsActivity : Activity() {
@@ -30,6 +35,7 @@ class ResultsActivity : Activity() {
     }
 
     private val MSG_UPDATE_DATA = 1
+    private val MSG_ERR_NO_JOBS = 2
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +57,12 @@ class ResultsActivity : Activity() {
             if (response != null) {
                 val resJSON = JSONObject(response)
                 //try {
+                if (resJSON.getInt("currentResults") == 0) {
+                    // we don't have any results
+                    val m = Message()
+                    m.what = MSG_ERR_NO_JOBS
+                    updateUIHandler?.sendMessage(m)
+                } else {
                     val offer = resJSON.getJSONArray("offers").getJSONObject(0)
                     if (offer != null) {
                         val title = offer.get("title")
@@ -69,6 +81,7 @@ class ResultsActivity : Activity() {
                         m.what = MSG_UPDATE_DATA
                         updateUIHandler?.sendMessage(m)
                     }
+                }
                 //} catch (e: JSONException) {
                 //    logging
                 //    finish()
@@ -82,12 +95,29 @@ class ResultsActivity : Activity() {
 
     private fun createUpdateUiHandler() {
         if (updateUIHandler == null) {
-            updateUIHandler = object : Handler() {
+            updateUIHandler = @SuppressLint("HandlerLeak")
+            object : Handler() {
                 override fun handleMessage(msg: Message) {
                     // Means the message is sent from child thread.
                     if (msg.what === MSG_UPDATE_DATA) {
                         result_text_short_description.text = jobData.shortDescription
                         result_text_long_description.text = jobData.longDescription
+                    }
+                    if (msg.what === MSG_ERR_NO_JOBS) {
+                        // 1. Instantiate an <code><a href="/reference/android/app/AlertDialog.Builder.html">AlertDialog.Builder</a></code> with its constructor
+                        val builder = AlertDialog.Builder(this@ResultsActivity)
+
+                        // 2. Chain together various setter methods to set the dialog characteristics
+                        builder?.setMessage("We couldn't find any jobs related to that object.")?.setTitle("Oops")
+                        builder?.setCancelable(true)
+                        builder?.setNeutralButton(android.R.string.ok
+                        ) { dialog, _ ->
+                            finish()
+                            dialog.cancel()
+                        }
+
+                        // 3. Get the <code><a href="/reference/android/app/AlertDialog.html">AlertDialog</a></code> from <code><a href="/reference/android/app/AlertDialog.Builder.html#create()">create()</a></code>
+                        builder?.show()
                     }
                 }
             }
