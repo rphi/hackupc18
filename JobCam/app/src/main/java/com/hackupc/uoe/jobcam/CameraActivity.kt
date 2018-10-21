@@ -7,6 +7,7 @@ import android.graphics.*
 import android.os.Bundle
 import android.os.Handler
 import android.os.Message
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ImageView
@@ -23,6 +24,7 @@ import org.json.JSONObject
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.lang.Math.*
+import java.net.ConnectException
 import kotlin.concurrent.thread
 import kotlin.math.sqrt
 
@@ -153,8 +155,27 @@ class CameraActivity : Activity() {
                 .post(body)
                 .addHeader("X-secret", "hi")
                 .build()
-        val response = client.newCall(request).execute()
-        receive(json = response.body()!!.string())
+
+        try {
+            val response = client.newCall(request).execute()
+            val respBody = response.body()
+
+            if (respBody == null) {
+                Log.d("connect", "responBody null")
+                returnToMain()
+                return
+            }
+            receive(json = respBody.string())
+        } catch (e : ConnectException) {
+            Log.d("connect", "ConnectException")
+            returnToMain()
+        }
+    }
+
+    fun returnToMain() {
+        var intent = Intent(this@CameraActivity, MainActivity::class.java)
+        startActivity(intent)
+        Log.d("connect", "Returning to Main")
     }
 
     fun capture() {
